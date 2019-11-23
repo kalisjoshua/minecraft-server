@@ -1,0 +1,88 @@
+#! /bin/bash
+
+FORGE=forge-1.12.2-14.23.5.2768
+INSTALLER="$FORGE-installer.jar"
+UNIVERSAL="$FORGE-universal.jar"
+PIXELMON=Pixelmon-1.12.2-7.0.8-universal.jar
+WD=/opt/pixelmon
+
+mkdir -p "$WD/mods"
+
+function debug {
+  echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+  echo "$1"
+  echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+}
+
+function heredoc {
+cat > $1 <<HEREDOCCONTENT
+#! /bin/bash
+$2
+HEREDOCCONTENT
+chmod +x $1
+echo $1
+}
+
+HALT=$(heredoc "$WD/halt" ". $PID | xargs kill -9")
+debug "create $HALT"
+
+LAUNCH=$(heredoc "$WD/launch" "/usr/bin/java -Xms1g -Xmx1g -jar $WD/$UNIVERSAL --nogui")
+debug "create $LAUNCH"
+
+PID=$(heredoc "$WD/pid" "pgrep $WD/$UNIVERSAL")
+debug "create $PID"
+
+SERVICE="/etc/systemd/system/pixelmon.service"
+debug "create $SERVICE"
+cat > $SERVICE <<HEREDOC
+[Unit]
+Description=Pixelmon Minecraft Server
+
+[Service]
+ExecStart=$LAUNCH
+SuccessExitStatus=143
+WorkingDirectory=/opt/pixelmon
+
+[Install]
+WantedBy=multi-user.target
+HEREDOC
+
+debug "initializing the Minecraft server"
+
+cd $WD
+
+if [ ! -f "$UNIVERSAL" ]
+then
+  debug "get Forge installer (jar)"
+  curl -O "https://files.minecraftforge.net/maven/net/minecraftforge/forge/1.12.2-14.23.5.2768/$INSTALLER"
+fi
+
+java -jar "$INSTALLER" --installServer
+rm -rf "$INSTALLER" "$INSTALLER.log"
+
+if [ ! -f "eula.txt" ]
+then
+  debug "generate EULA"
+  . $LAUNCH
+fi
+
+debug "accept EULA"
+sed -i s/false/true/ eula.txt
+
+# sed -i s/white-list=false/white-list=true/ server.properties
+# [{"uuid": "4da3bbf3-2a74-4458-8227-813c0d020de0","name": "HappyJosh"}]
+
+if [ ! -f "$PIXELMON" ]
+then
+  debug "get Pixelmon mod (jar)"
+  cd $WD/mods && curl -O "https://download.nodecdn.net/containers/reforged/universal/release/$PIXELMON"
+fi
+
+debug "done with init"
+
+if [ "$1" = "start" ]
+then
+  debug "enable/start $SERVICE"
+  systemctl enable pixelmon.service
+  systemctl start pixelmon.service
+fi
