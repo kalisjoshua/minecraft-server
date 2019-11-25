@@ -70,9 +70,6 @@ fi
 debug "accept EULA"
 sed -i s/false/true/ eula.txt
 
-# sed -i s/white-list=false/white-list=true/ server.properties
-# [{"uuid": "4da3bbf3-2a74-4458-8227-813c0d020de0","name": "HappyJosh"}]
-
 if [ ! -f "$PIXELMON" ]
 then
   debug "get Pixelmon mod (jar)"
@@ -80,10 +77,3 @@ then
 fi
 
 debug "done with init"
-
-if [ "$1" = "start" ]
-then
-  debug "enable/start $SERVICE"
-  systemctl enable pixelmon.service
-  systemctl start pixelmon.service
-fi
