@@ -40,6 +40,7 @@ Description=Pixelmon Minecraft Server
 
 [Service]
 ExecStart=$LAUNCH
+ExecStartPost=echo "Pixelmon Minecraft server started."
 SuccessExitStatus=143
 WorkingDirectory=/opt/pixelmon
 
