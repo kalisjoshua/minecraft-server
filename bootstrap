@@ -1,12 +1,10 @@
 #! /bin/bash
 
-FORGE=forge-1.12.2-14.23.5.2768
-INSTALLER="$FORGE-installer.jar"
-UNIVERSAL="$FORGE-universal.jar"
-PIXELMON=Pixelmon-1.12.2-7.0.8-universal.jar
-WD=/opt/pixelmon
+MC=https://launcher.mojang.com/v1/objects/bb2b6b1aefcd70dfd1892149ac3a215f6c636b07/server.jar
+WD=/opt/minecraft
 
-mkdir -p "$WD/mods"
+rm -rf $WD
+mkdir -p $WD
 
 function debug {
   echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -23,57 +21,43 @@ chmod +x $1
 echo $1
 }
 
+PID=$(heredoc "$WD/pid" "pgrep $WD/server.jar")
+debug "create $PID"
+
 HALT=$(heredoc "$WD/halt" ". $PID | xargs kill -9")
 debug "create $HALT"
 
-LAUNCH=$(heredoc "$WD/launch" "/usr/bin/java -Xms1g -Xmx1g -jar $WD/$UNIVERSAL --nogui")
+LAUNCH=$(heredoc "$WD/launch" "/usr/bin/java -Xms14g -Xmx14g -jar $WD/server.jar --nogui")
 debug "create $LAUNCH"
 
-PID=$(heredoc "$WD/pid" "pgrep $WD/$UNIVERSAL")
-debug "create $PID"
-
-SERVICE="/etc/systemd/system/pixelmon.service"
+SERVICE="/etc/systemd/system/minecraft.service"
+rm -rf $SERVICE
 debug "create $SERVICE"
 cat > $SERVICE <<HEREDOC
 [Unit]
-Description=Pixelmon Minecraft Server
+Description=Black Mesa Minecraft Server
 
 [Service]
 ExecStart=$LAUNCH
-ExecStartPost=echo "Pixelmon Minecraft server started."
+ExecStartPost=echo "Black Mesa Minecraft server started."
 SuccessExitStatus=143
-WorkingDirectory=/opt/pixelmon
+WorkingDirectory=/opt/minecraft
 
 [Install]
 WantedBy=multi-user.target
 HEREDOC
 
-debug "initializing the Minecraft server"
+chmod +x $SERVICE
 
 cd $WD
 
-if [ ! -f "$UNIVERSAL" ]
-then
-  debug "get Forge installer (jar)"
-  curl -O "https://files.minecraftforge.net/maven/net/minecraftforge/forge/1.12.2-14.23.5.2768/$INSTALLER"
-fi
+debug "get Minecraft server (jar)"
+curl -O $MC
 
-java -jar "$INSTALLER" --installServer
-rm -rf "$INSTALLER" "$INSTALLER.log"
-
-if [ ! -f "eula.txt" ]
-then
-  debug "generate EULA"
-  . $LAUNCH
-fi
+debug "generate EULA"
+. $LAUNCH
 
 debug "accept EULA"
 sed -i s/false/true/ eula.txt
-
-if [ ! -f "$PIXELMON" ]
-then
-  debug "get Pixelmon mod (jar)"
-  cd $WD/mods && curl -O "https://download.nodecdn.net/containers/reforged/universal/release/$PIXELMON"
-fi
 
 debug "done with init"
