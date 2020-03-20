@@ -2,7 +2,7 @@
       + OS only - Ubuntu 16.04
       + Startup script -
         ```
-        curl -o /tmp/bootstrap https://raw.githubusercontent.com/kalisjoshua/minecraft-server/vanilla/bootstrap
+        curl -o /tmp/bootstrap https://raw.githubusercontent.com/kalisjoshua/minecraft-server/master/bootstrap
         chmod +x /tmp/bootstrap
         ```
       + Networking (tab) add custom PORTs
