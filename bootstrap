@@ -1,6 +1,6 @@
 #! /bin/bash
 
-MC=https://launcher.mojang.com/v1/objects/bb2b6b1aefcd70dfd1892149ac3a215f6c636b07/server.jar
+MC=https://launcher.mojang.com/v1/objects/0a269b5f2c5b93b1712d0f5dc43b6182b9ab254e/server.jar
 WD=/opt/minecraft
 
 rm -rf $WD
